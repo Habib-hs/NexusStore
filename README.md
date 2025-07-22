@@ -92,7 +92,6 @@ This is a learning project! Feel free to:
 - Report issues
 - Suggest improvements
 - Submit pull requests
-- Share learning resources
 
 ## 📄 License
 
