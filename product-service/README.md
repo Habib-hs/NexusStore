@@ -12,8 +12,7 @@ A RESTful microservice for managing products in an e-commerce platform, built wi
 - [Configuration](#️-configuration)
 - [API Documentation](#-api-documentation)
 - [Running the Application](#️♂️-running-the-application)
-- [Testing](#-testing)
-- [Project Structure](#-project-structure)
+- [Testing](#-testing)gi
 - [Contributing](#-contributing)
 
 ## 🔍 Overview
@@ -262,31 +261,6 @@ curl -X POST http://localhost:8080/api/products \
     "category": "Test",
     "brand": "TestBrand"
   }'
-```
-
-## 📁 Project Structure
-
-```
-src/
-├── main/
-│   ├── java/com/nexus/productservice/
-│   │   ├── controller/          # REST Controllers
-│   │   │   └── ProductController.java
-│   │   ├── dto/                 # Data Transfer Objects
-│   │   │   ├── ProductRequestDto.java
-│   │   │   └── ProductResponseDto.java
-│   │   ├── model/               # Entity Classes
-│   │   │   └── Product.java
-│   │   ├── repository/          # Repository Interfaces
-│   │   │   └── ProductRepository.java
-│   │   ├── service/             # Business Logic
-│   │   │   └── ProductService.java
-│   │   └── ProductServiceApplication.java
-│   └── resources/
-│       ├── application.properties
-│       └── static/
-└── test/                        # Test Classes
-    └── java/
 ```
 
 ## 🔧 Development Setup
