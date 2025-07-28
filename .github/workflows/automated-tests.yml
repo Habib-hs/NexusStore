@@ -1,10 +1,10 @@
-name : Automated Testing
+name: Automated Testing
 # Ensure all tests pass before code reaches main branch
 # Catches bugs early, validates business logic, prevents broken code
 
 on:
   push:
-   branches: ['**']
+    branches: ['**']
   pull_request:
     branches: [main]
 
@@ -12,6 +12,11 @@ jobs:
   test:
     name: Run All Tests
     runs-on: ubuntu-latest
+
+    # ✅ This applies to ALL steps in this job
+    defaults:
+      run:
+        working-directory: ./product-service
 
     steps:
       # Get the latest code from repository
@@ -21,7 +26,7 @@ jobs:
 
       # Setup Java 17 environment
       # Spring Boot application requires Java 17 to compile and run
-      - name : Set up JDK 17
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
@@ -34,28 +39,27 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          key: ${{ runner.os }}-m2-${{ hashFiles('product-service/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      #  Start all required services using docker-compose
-      #  tests need MongoDB and other services to run properly
-      #  Uses my existing docker-compose.yml configuration
-      - name : Start all Services with Docker Compose
+      # Start all required services using docker-compose
+      # Tests need MongoDB and other services to run properly
+      # Uses existing docker-compose.yml configuration
+      - name: Start all Services with Docker Compose
         run: |
           echo "🐳 Starting services with docker-compose..."
-          docker compose -f product-service/docker-compose.yml up -d
+          docker compose up -d
           echo "⏳ Waiting for services to be ready..."
           sleep 15
 
       # Verify services are running
       - name: Verify services are running
-        run: docker compose -f product-service/docker-compose.yml ps
+        run: docker compose ps
 
       # Run unit tests
       # Validates individual components work correctly (ProductService, ProductController)
       # Catches logic errors in business rules and API endpoints
       - name: Run Unit Tests
-        working-directory: product-service
         run: |
           echo "🧪 Running unit tests..."
           ./mvnw test -Dtest="*Test"
@@ -65,7 +69,6 @@ jobs:
       # Tests that different parts of your app work together (Controller + Service + Database)
       # Catches issues in data flow and API integration
       - name: Run Integration Tests
-        working-directory: product-service
         run: |
           echo "🔗 Running integration tests..."
           ./mvnw test -Dtest="*IT"
@@ -75,22 +78,20 @@ jobs:
       # Tests complete user workflows from API call to database response
       # Ensures entire application works as expected from user perspective
       - name: Run End-to-End Tests
-        working-directory: product-service
         run: |
           echo "🌐 Running end-to-end tests..."
           ./mvnw verify
           echo "✅ E2E tests completed"
 
-        # Generate test reports
-        # Provides detailed information about test results and coverage
-        # Helps identify which parts of code need more testing
+      # Generate test reports
+      # Provides detailed information about test results and coverage
+      # Helps identify which parts of code need more testing
       - name: Generate Test Reports
-        working-directory: product-service
         run: |
           echo "📊 Generating test reports..."
           ./mvnw surefire-report:report
           ./mvnw jacoco:report
-           echo "✅ Test reports generated"
+          echo "✅ Test reports generated"
 
       # Clean up - stop docker services
       # Prevents resource usage after tests complete
@@ -98,5 +99,5 @@ jobs:
         if: always()
         run: |
           echo "🛑 Stopping docker services..."
-          docker compose -f product-service/docker-compose.yml down
+          docker compose down
           echo "✅ Services stopped"
