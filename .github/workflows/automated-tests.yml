@@ -56,30 +56,50 @@ jobs:
       - name: Verify services are running
         run: docker compose ps
 
-      # Check what test files exist (for debugging)
-      - name: List test files
+      # Run unit tests
+      # Validates individual components work correctly (ProductService, ProductController)
+      # Catches logic errors in business rules and API endpoints
+      - name: Run Unit Tests
         run: |
-          echo "📁 Checking for test files..."
-          find src/test -name "*.java" 2>/dev/null || echo "No test directory found"
-          ls -la src/test/java/ 2>/dev/null || echo "No src/test/java directory found"
+          echo "🧪 Running unit tests..."
+          mvn test -Dtest="*Test" -Dsurefire.failIfNoSpecifiedTests=false
+          echo "✅ Unit tests completed (or skipped if none found)"
 
-      # Run all tests (simplified approach)
-      # Runs all available tests regardless of naming pattern
-      - name: Run All Tests
+      # Run integration tests
+      # Tests that different parts of your app work together (Controller + Service + Database)
+      # Catches issues in data flow and API integration
+      - name: Run Integration Tests
         run: |
-          echo "🧪 Running all tests..."
-          mvn test -Dsurefire.failIfNoSpecifiedTests=false
-          echo "✅ Tests completed"
+          echo "🔗 Running integration tests..."
+          mvn test -Dtest="*IT,*IntegrationTest" -Dsurefire.failIfNoSpecifiedTests=false
+          echo "✅ Integration tests completed (or skipped if none found)"
+
+      # Run Spring Boot application tests
+      # Tests complete application context loading and basic functionality
+      # Your current ProductServiceApplicationTests.java falls into this category
+      - name: Run Application Tests
+        run: |
+          echo "🌱 Running Spring Boot application tests..."
+          mvn test -Dtest="*Tests,*ApplicationTests" -Dsurefire.failIfNoSpecifiedTests=false
+          echo "✅ Application tests completed"
+
+      # Run end-to-end tests
+      # Tests complete user workflows from API call to database response
+      # Ensures entire application works as expected from user perspective
+      - name: Run End-to-End Tests
+        run: |
+          echo "🌐 Running end-to-end tests..."
+          mvn verify -Dsurefire.failIfNoSpecifiedTests=false
+          echo "✅ E2E tests completed (or skipped if none found)"
 
       # Generate test reports
-      # Provides detailed information about test results and coverage
-      # Helps identify which parts of code need more testing
+      # Provides detailed information about test results
       - name: Generate Test Reports
         run: |
           echo "📊 Generating test reports..."
           mvn surefire-report:report
-          mvn jacoco:report
           echo "✅ Test reports generated"
+          echo "ℹ️  JaCoCo skipped (plugin not configured in pom.xml)"
 
       # Clean up - stop docker services
       # Prevents resource usage after tests complete
