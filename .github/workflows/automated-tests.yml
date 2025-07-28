@@ -62,7 +62,7 @@ jobs:
       - name: Run Unit Tests
         run: |
           echo "🧪 Running unit tests..."
-          ./mvnw test -Dtest="*Test"
+          mvn test -Dtest="*Test"
           echo "✅ Unit tests completed"
 
       # Run integration tests
@@ -71,7 +71,7 @@ jobs:
       - name: Run Integration Tests
         run: |
           echo "🔗 Running integration tests..."
-          ./mvnw test -Dtest="*IT"
+          mvn test -Dtest="*IT"
           echo "✅ Integration tests completed"
 
       # Run end-to-end tests
@@ -80,7 +80,7 @@ jobs:
       - name: Run End-to-End Tests
         run: |
           echo "🌐 Running end-to-end tests..."
-          ./mvnw verify
+          mvn verify
           echo "✅ E2E tests completed"
 
       # Generate test reports
@@ -89,8 +89,8 @@ jobs:
       - name: Generate Test Reports
         run: |
           echo "📊 Generating test reports..."
-          ./mvnw surefire-report:report
-          ./mvnw jacoco:report
+          mvn surefire-report:report
+          mvn jacoco:report
           echo "✅ Test reports generated"
 
       # Clean up - stop docker services
