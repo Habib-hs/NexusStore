@@ -43,13 +43,13 @@ jobs:
       - name : Start all Services with Docker Compose
         run: |
           echo "🐳 Starting services with docker-compose..."
-          docker-compose up -d
+          docker compose up -d
           echo "⏳ Waiting for services to be ready..."
           sleep 15
 
       # Verify services are running
       - name: Verify services are running
-        run: docker-compose ps
+        run: docker compose ps
 
       # Run unit tests
       # Validates individual components work correctly (ProductService, ProductController)
@@ -94,5 +94,5 @@ jobs:
         if: always()
         run: |
           echo "🛑 Stopping docker services..."
-          docker-compose down
+          docker compose down
           echo "✅ Services stopped"
