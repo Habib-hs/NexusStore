@@ -1,0 +1,98 @@
+name : Automated Testing
+# Ensure all tests pass before code reaches main branch
+# Catches bugs early, validates business logic, prevents broken code
+
+on:
+  push:
+    branches: [main,develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Run All Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # Get the latest code from repository
+      # GitHub Actions need access to source code to run tests
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Setup Java 17 environment
+      # Spring Boot application requires Java 17 to compile and run
+      - name : Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # Cache Maven dependencies to speed up builds
+      # Avoids re-downloading same dependencies, reduces build time significantly
+      # Build time goes from 4-5 minutes to 1-2 minutes
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      #  Start all required services using docker-compose
+      #  tests need MongoDB and other services to run properly
+      #  Uses my existing docker-compose.yml configuration
+      - name : Start all Services with Docker Compose
+        run: |
+          echo "🐳 Starting services with docker-compose..."
+          docker-compose up -d
+          echo "⏳ Waiting for services to be ready..."
+          sleep 15
+
+      # Verify services are running
+      - name: Verify services are running
+        run: docker-compose ps
+
+      # Run unit tests
+      # Validates individual components work correctly (ProductService, ProductController)
+      # Catches logic errors in business rules and API endpoints
+      - name: Run Unit Tests
+        run: |
+          echo "🧪 Running unit tests..."
+          ./mvnw test -Dtest="*Test"
+          echo "✅ Unit tests completed"
+
+      # Run integration tests
+      # Tests that different parts of your app work together (Controller + Service + Database)
+      # Catches issues in data flow and API integration
+      - name: Run Integration Tests
+        run: |
+          echo "🔗 Running integration tests..."
+          ./mvnw test -Dtest="*IT"
+          echo "✅ Integration tests completed"
+
+      # Run end-to-end tests
+      # Tests complete user workflows from API call to database response
+      # Ensures entire application works as expected from user perspective
+      - name: Run End-to-End Tests
+        run: |
+          echo "🌐 Running end-to-end tests..."
+          ./mvnw verify
+          echo "✅ E2E tests completed"
+
+        # Generate test reports
+        # Provides detailed information about test results and coverage
+        # Helps identify which parts of code need more testing
+      - name: Generate Test Reports
+        run: |
+          echo "📊 Generating test reports..."
+          ./mvnw surefire-report:report
+          ./mvnw jacoco:report
+           echo "✅ Test reports generated"
+
+      # Clean up - stop docker services
+      # Prevents resource usage after tests complete
+      - name: Stop services
+        if: always()
+        run: |
+          echo "🛑 Stopping docker services..."
+          docker-compose down
+          echo "✅ Services stopped"
