@@ -55,6 +55,7 @@ jobs:
       # Validates individual components work correctly (ProductService, ProductController)
       # Catches logic errors in business rules and API endpoints
       - name: Run Unit Tests
+        working-directory: product-service
         run: |
           echo "🧪 Running unit tests..."
           ./mvnw test -Dtest="*Test"
@@ -64,6 +65,7 @@ jobs:
       # Tests that different parts of your app work together (Controller + Service + Database)
       # Catches issues in data flow and API integration
       - name: Run Integration Tests
+        working-directory: product-service
         run: |
           echo "🔗 Running integration tests..."
           ./mvnw test -Dtest="*IT"
@@ -73,6 +75,7 @@ jobs:
       # Tests complete user workflows from API call to database response
       # Ensures entire application works as expected from user perspective
       - name: Run End-to-End Tests
+        working-directory: product-service
         run: |
           echo "🌐 Running end-to-end tests..."
           ./mvnw verify
@@ -82,6 +85,7 @@ jobs:
         # Provides detailed information about test results and coverage
         # Helps identify which parts of code need more testing
       - name: Generate Test Reports
+        working-directory: product-service
         run: |
           echo "📊 Generating test reports..."
           ./mvnw surefire-report:report
