@@ -1,7 +1,6 @@
-package com.nexus.productservice;
+package com.nexus.productservice.service;
 
 // JUnit 5 imports for testing framework
-import com.nexus.productservice.service.ProductService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,8 +21,6 @@ import com.nexus.productservice.dto.ProductRequestDto;
 import com.nexus.productservice.dto.ProductResponseDto;
 import com.nexus.productservice.model.Product;
 import com.nexus.productservice.repository.ProductRepository;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 
 import java.math.BigDecimal;
 import java.util.List;
