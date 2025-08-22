@@ -3,6 +3,7 @@ package com.nexus.productservice.controller;
 import com.nexus.productservice.dto.ProductRequestDto;
 import com.nexus.productservice.dto.ProductResponseDto;
 import com.nexus.productservice.service.ProductService;
+import com.nexus.productservice.service.TokenBucketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,8 +29,8 @@ public class ProductController {
     // READ - GET /api/products
     @GetMapping
     public ResponseEntity<List<ProductResponseDto>> getAllProducts() {
-        List<ProductResponseDto> products = productService.getAllProducts();
-        return ResponseEntity.ok(products);
+            List<ProductResponseDto> products = productService.getAllProducts();
+            return ResponseEntity.ok(products);
     }
     
     // READ - GET /api/products/{id}
