@@ -1,6 +1,7 @@
 package com.nexus.productservice.controller;
 
 // JUnit 5 imports for testing framework
+import com.nexus.productservice.service.TokenBucketService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -76,6 +77,8 @@ class ProductControllerTest {
     // MOCKED DEPENDENCIES
     @MockitoBean  //  Creates mock and adds to Spring context (different from @Mock)
     private ProductService productService;  // Fake service layer
+    @MockitoBean
+    private TokenBucketService tokenBucketService; //fake token bucket service
 
     // TEST DATA
     private ProductRequestDto validRequest;
@@ -89,6 +92,19 @@ class ProductControllerTest {
      */
     @BeforeEach
     void setUp() {
+        // Configure TokenBucketService mock to allow all requests in tests
+        when(tokenBucketService.tryConsumeToken(anyString())).thenReturn(true);
+
+        // Valid request data (what a client would send)
+        validRequest = new ProductRequestDto(
+                "iPhone 15 Pro",           // name
+                "Latest iPhone Pro model", // description
+                new BigDecimal("1199.99"), // price
+                25,                        // quantity
+                "Electronics",             // category
+                "Apple"                    // brand
+        );
+
         // Valid request data (what a client would send)
         validRequest = new ProductRequestDto(
                 "iPhone 15 Pro",           // name

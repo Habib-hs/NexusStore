@@ -50,3 +50,9 @@ services:
     command: -config.file=/etc/promtail/config.yml
     depends_on:
       - loki
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
