@@ -58,6 +58,11 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('product-service/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+      # Build the Spring Boot JAR before Docker Compose
+      # Ensures the JAR file exists for the Docker build
+      - name: Build Spring Boot JAR
+        run: mvn clean package -DskipTests
+
       # Start all required services using docker-compose
       # Tests need MongoDB and other services to run properly
       # Uses existing docker-compose.yml configuration
