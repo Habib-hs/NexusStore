@@ -1,5 +1,19 @@
-version: '4'
 services:
+  product-service:
+    build: .
+    container_name: product-service
+    ports:
+      - "${HOST_PORT:-8080}:${CONTAINER_PORT:-8081}"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE:-dev}
+      - SERVER_PORT=${CONTAINER_PORT:-8081}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: on-failure
+
   mongodb:
     image: mongo:7.0.5
     container_name: mongodb
@@ -11,6 +25,24 @@ services:
       MONGO_INITDB_DATABASE: product-service
     volumes:
       - ./data/mongodb:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
 
   prometheus:
     image: prom/prometheus:latest
@@ -50,9 +82,3 @@ services:
     command: -config.file=/etc/promtail/config.yml
     depends_on:
       - loki
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-
