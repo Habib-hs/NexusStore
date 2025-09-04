@@ -1,70 +1,110 @@
+version: '3.8'
+
+# ----------------------------
+# Networks - for isolation
+# ----------------------------
+networks:
+  product-network:
+    driver: bridge
+  db-network:
+    driver: bridge
+  monitoring-network:
+    driver: bridge
+
+# ----------------------------
+# Volumes - for persistence
+# ----------------------------
+volumes:
+  mongodb_data:
+  redis_data:
+
+# ----------------------------
+# Services
+# ----------------------------
 services:
+  # ---------- Product Service ----------
   product-service:
     build: .
     container_name: product-service
+    networks:
+      - product-network
+      - db-network  # can talk to MongoDB & Redis
     ports:
-      - "${HOST_PORT:-8080}:${CONTAINER_PORT:-8081}"
+      - "${HOST_PORT}:${CONTAINER_PORT}"
     environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE:-dev}
-      - SERVER_PORT=${CONTAINER_PORT:-8081}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE}
+      - SERVER_PORT=${CONTAINER_PORT}
+      - SPRING_REDIS_HOST=${REDIS_HOST}
+      - SPRING_REDIS_PORT=${REDIS_PORT}
+      - SPRING_DATA_MONGODB_URI_DEV=${SPRING_DATA_MONGODB_URI_DEV}
+      - SPRING_DATA_MONGODB_URI_PROD=${SPRING_DATA_MONGODB_URI_PROD}
     depends_on:
-      mongodb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: on-failure
+      - redis
+      - mongodb
+    restart: unless-stopped
 
+  # ---------- MongoDB ----------
   mongodb:
     image: mongo:7.0.5
     container_name: mongodb
+    networks:
+      - db-network
     ports:
-      - "27017:27017"
+      - "${MONGODB_PORT}:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: password
-      MONGO_INITDB_DATABASE: product-service
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE}
     volumes:
       - ./data/mongodb:/data/db
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
+    restart: unless-stopped
 
+  # ---------- Redis ----------
   redis:
     image: redis:7-alpine
     container_name: redis
+    networks:
+      - db-network
     ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 3s
-      retries: 5
-      start_period: 30s
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
 
+  # ---------- Prometheus ----------
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
+    networks:
+      - monitoring-network
+      - db-network  # if you want to scrape DB metrics
     volumes:
-        - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
+    restart: unless-stopped
 
+  # ---------- Grafana ----------
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
+    networks:
+      - monitoring-network
+      - db-network  # for DB metrics if needed
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
     depends_on:
       - prometheus
+    restart: unless-stopped
 
+  # ---------- Loki ----------
   loki:
     image: grafana/loki:latest
     container_name: loki
+    networks:
+      - monitoring-network
     ports:
       - "3100:3100"
     volumes:
@@ -72,13 +112,18 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     depends_on:
       - grafana
+    restart: unless-stopped
 
+  # ---------- Promtail ----------
   promtail:
     image: grafana/promtail:latest
     container_name: promtail
+    networks:
+      - monitoring-network
     volumes:
       - ./promtail-config.yml:/etc/promtail/config.yml
       - ./logs:/var/log/app
     command: -config.file=/etc/promtail/config.yml
     depends_on:
       - loki
+    restart: unless-stopped
