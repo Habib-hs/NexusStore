@@ -15,6 +15,20 @@ jobs:
     name: Run All Tests
     runs-on: ubuntu-latest
 
+    env:
+      SPRING_DATA_MONGODB_URI_PROD: ${{ secrets.SPRING_DATA_MONGODB_URI_PROD }}
+      SPRING_DATA_MONGODB_URI_DEV: ${{ secrets.SPRING_DATA_MONGODB_URI_DEV }}
+      MONGODB_USERNAME: ${{ secrets.MONGODB_USERNAME }}
+      MONGODB_PASSWORD: ${{ secrets.MONGODB_PASSWORD }}
+      MONGODB_DATABASE: ${{ secrets.MONGODB_DATABASE }}
+      MONGODB_PORT: ${{ secrets.MONGODB_PORT }}
+      REDIS_HOST: ${{ secrets.REDIS_HOST }}
+      REDIS_PORT: ${{ secrets.REDIS_PORT }}
+      GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+      HOST_PORT: ${{ secrets.HOST_PORT }}
+      CONTAINER_PORT: ${{ secrets.CONTAINER_PORT }}
+      SPRING_PROFILE: ${{ secrets.SPRING_PROFILE }}
+
     # ✅ This applies to ALL steps in this job
     defaults:
       run:
