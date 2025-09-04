@@ -266,14 +266,14 @@ curl -X POST http://localhost:8080/api/products \
 ## 🔧 Development Setup
 
 1. **IDE Setup**
-   - Install Lombok plugin for your IDE
-   - Configure Java 17 as project SDK
-   - Enable annotation processing
+    - Install Lombok plugin for your IDE
+    - Configure Java 17 as project SDK
+    - Enable annotation processing
 
 2. **Code Style**
-   - Follow Java naming conventions
-   - Use Lombok annotations to reduce boilerplate
-   - Maintain consistent formatting
+    - Follow Java naming conventions
+    - Use Lombok annotations to reduce boilerplate
+    - Maintain consistent formatting
 
 3. **Git Workflow**
    ```bash
@@ -310,3 +310,4 @@ For support and questions:
 ---
 
 **Built with ❤️ using Spring Boot and MongoDB**
+
