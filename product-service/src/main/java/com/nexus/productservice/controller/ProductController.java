@@ -5,6 +5,7 @@ import com.nexus.productservice.dto.ProductResponseDto;
 import com.nexus.productservice.service.ProductService;
 import com.nexus.productservice.service.TokenBucketService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
+@Slf4j
 public class ProductController {
     
     private final ProductService productService;
@@ -29,8 +31,20 @@ public class ProductController {
     // READ - GET /api/products
     @GetMapping
     public ResponseEntity<List<ProductResponseDto>> getAllProducts() {
-            List<ProductResponseDto> products = productService.getAllProducts();
-            return ResponseEntity.ok(products);
+        log.info("🌐 API REQUEST: GET /api/products - Attempting to fetch all products");
+        long startTime = System.currentTimeMillis();
+
+        List<ProductResponseDto> products = productService.getAllProducts();
+
+        long duration = System.currentTimeMillis() - startTime;
+        if (duration < 15) { // If response is very fast, likely from cache
+            log.info("⚡ CACHE HIT: Response served in {}ms (likely from CACHE)", duration);
+        } else {
+            log.info("🐌 Possible CACHE MISS: Response took {}ms (likely from DATABASE)", duration);
+        }
+
+        log.info("🌐 API RESPONSE: Returning {} products to client", products.size());
+        return ResponseEntity.ok(products);
     }
     
     // READ - GET /api/products/{id}
