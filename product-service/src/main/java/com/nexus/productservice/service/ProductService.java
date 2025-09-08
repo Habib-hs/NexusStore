@@ -6,6 +6,8 @@ import com.nexus.productservice.model.Product;
 import com.nexus.productservice.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -21,6 +23,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     
     // Create
+    @CacheEvict(value = "products", allEntries = true)
     public ProductResponseDto createProduct(ProductRequestDto requestDto) {
         log.info("Creating new product with name: {} and category: {}", requestDto.getName(), requestDto.getCategory());
         log.debug("Product creation request details - Name: {}, Price: {}, Quantity: {}, Brand: {}", 
@@ -49,6 +52,7 @@ public class ProductService {
     }
     
     // Read All
+    @Cacheable(value = "products", key = "'all-products'")
     public List<ProductResponseDto> getAllProducts() {
         log.info("Fetching all active products");
         long startTime = System.currentTimeMillis();
@@ -163,6 +167,7 @@ public class ProductService {
     }
     
     // Update
+    @CacheEvict(value = "products", allEntries = true)
     public Optional<ProductResponseDto> updateProduct(String id, ProductRequestDto requestDto) {
         log.info("Updating product with ID: {}", id);
         log.debug("Product update request - ID: {}, Name: {}, Price: {}, Quantity: {}", 
@@ -209,6 +214,7 @@ public class ProductService {
     }
     
     // Delete (Soft Delete)
+    @CacheEvict(value = "products", allEntries = true)
     public boolean deleteProduct(String id) {
         log.info("Soft deleting product with ID: {}", id);
         
@@ -238,6 +244,7 @@ public class ProductService {
     }
     
     // Hard Delete (if needed)
+    @CacheEvict(value = "products", allEntries = true)
     public boolean hardDeleteProduct(String id) {
         log.warn("Hard deleting product with ID: {} - This action is irreversible", id);
         

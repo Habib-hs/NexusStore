@@ -26,8 +26,17 @@ public class RateLimitFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                   FilterChain filterChain) throws ServletException, IOException {
 
-        // Get client identifier (IP address for simplicity)
+        String requestPath = request.getRequestURI();
         String clientIdentifier = getClientIdentifier(request);
+
+        // Log every request
+        log.info("📥 Request from {} to endpoint: {}", clientIdentifier, requestPath);
+
+        // Skip rate limiting for actuator endpoints
+        if (requestPath.startsWith("/actuator/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // Try to consume a token
         if (!tokenBucketService.tryConsumeToken(clientIdentifier)) {
@@ -44,12 +53,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private String getClientIdentifier(HttpServletRequest request) {
-        // First try to get real IP from X-Forwarded-For header (for load balancers)
         String xForwardedFor = request.getHeader("X-Forwarded-For");
         if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
             return xForwardedFor.split(",")[0].trim();
         }
-
         // Fallback to remote address
         return request.getRemoteAddr();
     }
