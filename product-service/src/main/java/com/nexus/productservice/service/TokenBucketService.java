@@ -18,15 +18,19 @@ public class TokenBucketService {
     }
 
     public boolean tryConsumeToken(String identifier) {
-        String key = "ratelimit:" + identifier; // More generic key
+        String key = "ratelimit:" + identifier;
 
-        // Rest of the code remains the same
         if (Boolean.FALSE.equals(redisTemplate.hasKey(key))) {
             redisTemplate.opsForValue().set(key, String.valueOf(MAX_TOKENS - 1), REFILL_INTERVAL, TimeUnit.SECONDS);
             return true;
         }
 
-        int tokens = Integer.parseInt(redisTemplate.opsForValue().get(key));
+        String tokenValue = redisTemplate.opsForValue().get(key);
+        if (tokenValue == null) {
+            return false;
+        }
+
+        int tokens = Integer.parseInt(tokenValue);
         if (tokens > 0) {
             redisTemplate.opsForValue().decrement(key);
             return true;
