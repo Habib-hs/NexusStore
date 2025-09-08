@@ -1,44 +1,63 @@
 package com.nexus.productservice.filter;
 
 import com.nexus.productservice.service.TokenBucketService;
-import jakarta.servlet.*;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
 @Component
+@ConditionalOnProperty(name = "app.rate-limiting.enabled", havingValue = "true")
 @RequiredArgsConstructor
-public class RateLimitFilter implements Filter {
+@Slf4j
+public class RateLimitFilter extends OncePerRequestFilter {
 
     private final TokenBucketService tokenBucketService;
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                  FilterChain filterChain) throws ServletException, IOException {
 
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
+        String requestPath = request.getRequestURI();
+        String clientIdentifier = getClientIdentifier(request);
 
-        String clientIp = getClientIpAddress(httpRequest);
+        // Log every request
+        log.info("📥 Request from {} to endpoint: {}", clientIdentifier, requestPath);
 
-        if (tokenBucketService.tryConsumeToken(clientIp)) {
-            chain.doFilter(request, response);
-        } else {
-            httpResponse.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-            httpResponse.setContentType("application/json");
-            httpResponse.getWriter().write("{\"error\":\"Rate limit exceeded. Try again later.\"}");
+        // Skip rate limiting for actuator endpoints
+        if (requestPath.startsWith("/actuator/")) {
+            filterChain.doFilter(request, response);
+            return;
         }
+
+        // Try to consume a token
+        if (!tokenBucketService.tryConsumeToken(clientIdentifier)) {
+            // Rate limit exceeded
+            response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\":\"Rate limit exceeded. Please try again later.\"}");
+            log.warn("Rate limit exceeded for client: {}", clientIdentifier);
+            return;
+        }
+
+        // Continue with the request
+        filterChain.doFilter(request, response);
     }
 
-    private String getClientIpAddress(HttpServletRequest request) {
+    private String getClientIdentifier(HttpServletRequest request) {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
         if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
             return xForwardedFor.split(",")[0].trim();
         }
+        // Fallback to remote address
         return request.getRemoteAddr();
     }
 }
