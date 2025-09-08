@@ -24,7 +24,13 @@ public class RateLimitFilter implements Filter {
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
         String clientIp = getClientIpAddress(httpRequest);
+        String requestPath = httpRequest.getRequestURI();
 
+        // Skip rate limiting for actuator endpoints
+        if (requestPath.startsWith("/actuator/")) {
+            chain.doFilter(request, response);
+            return;
+        }
         if (tokenBucketService.tryConsumeToken(clientIp)) {
             chain.doFilter(request, response);
         } else {
@@ -33,6 +39,7 @@ public class RateLimitFilter implements Filter {
             httpResponse.getWriter().write("{\"error\":\"Rate limit exceeded. Try again later.\"}");
         }
     }
+
 
     private String getClientIpAddress(HttpServletRequest request) {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
