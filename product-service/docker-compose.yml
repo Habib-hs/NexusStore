@@ -34,13 +34,15 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE}
       - SERVER_PORT=${CONTAINER_PORT}
-      - SPRING_REDIS_HOST=${REDIS_HOST}
-      - SPRING_REDIS_PORT=${REDIS_PORT}
+      - SPRING_DATA_REDIS_HOST=${REDIS_HOST}
+      - SPRING_DATA_REDIS_PORT=${REDIS_PORT}
       - SPRING_DATA_MONGODB_URI_DEV=${SPRING_DATA_MONGODB_URI_DEV}
       - SPRING_DATA_MONGODB_URI_PROD=${SPRING_DATA_MONGODB_URI_PROD}
     depends_on:
-      - redis
-      - mongodb
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
     restart: unless-stopped
 
   # ---------- MongoDB ----------
@@ -55,6 +57,11 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
       MONGO_INITDB_DATABASE: ${MONGODB_DATABASE}
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - ./data/mongodb:/data/db
     restart: unless-stopped
@@ -67,6 +74,11 @@ services:
       - db-network
     ports:
       - "${REDIS_PORT}:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - redis_data:/data
     restart: unless-stopped
