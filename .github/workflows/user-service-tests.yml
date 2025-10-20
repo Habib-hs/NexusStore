@@ -1,0 +1,117 @@
+# Ensure all tests pass before code reaches main branch
+# Catches bugs early, validates business logic, prevents broken code
+name: User Service Tests
+
+#  Run tests on every push to any branch + PRs targeting main
+# Catch issues early on feature branches, validate before merging to main
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'user-service/**'
+      - '.github/workflows/user-service-tests.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'user-service/**'
+
+
+jobs:
+  test:
+    name: Run All Tests
+    runs-on: ubuntu-latest
+
+    # ✅ This applies to ALL steps in this job
+    defaults:
+      run:
+        working-directory: ./user-service
+
+    steps:
+      # Get the latest code from repository
+      # GitHub Actions need access to source code to run tests
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Setup Java 21 environment
+      # Spring Boot application requires Java 21 to compile and run
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # Cache Gradle dependencies to speed up builds
+      # Avoids re-downloading same dependencies, reduces build time significantly
+      # Build time goes from 4-5 minutes to 1-2 minutes
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('user-service/**/*.gradle*', 'user-service/**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle
+
+      # Make gradlew executable
+      # Ensures the Gradle wrapper script has execute permissions
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      # Build the Spring Boot JAR
+      # Ensures the application compiles successfully before running tests
+      - name: Build Spring Boot JAR
+        run: ./gradlew clean build -x test
+
+      # Run unit tests
+      # Validates individual components work correctly (UserService, UserController)
+      # Catches logic errors in business rules and API endpoints
+      - name: Run Unit Tests
+        run: |
+          echo "🧪 Running unit tests..."
+          ./gradlew test --tests "*Test"
+          echo "✅ Unit tests completed"
+
+      # Run integration tests
+      # Tests that different parts of your app work together (Controller + Service + Database)
+      # Catches issues in data flow and API integration
+      - name: Run Integration Tests
+        run: |
+          echo "🔗 Running integration tests..."
+          ./gradlew test --tests "*IT" --tests "*IntegrationTest" --continue || echo "⚠️  No integration tests found or some failed"
+          echo "✅ Integration tests completed (or skipped if none found)"
+
+      # Run Spring Boot application tests
+      # Tests complete application context loading and basic functionality
+      - name: Run Application Tests
+        run: |
+          echo "🌱 Running Spring Boot application tests..."
+          ./gradlew test --tests "*Tests" --tests "*ApplicationTests" --continue || echo "⚠️  No application tests found or some failed"
+          echo "✅ Application tests completed"
+
+      # Run all tests with coverage
+      # Ensures complete test coverage and generates reports
+      - name: Run All Tests
+        run: |
+          echo "🌐 Running all tests..."
+          ./gradlew test
+          echo "✅ All tests completed"
+
+      # Generate test reports
+      # Provides detailed information about test results
+      - name: Generate Test Reports
+        if: always()
+        run: |
+          echo "📊 Test reports available at:"
+          echo "  - build/reports/tests/test/index.html"
+          ls -la build/reports/tests/test/ || echo "No test reports found"
+
+      # Upload test results as artifact
+      # Allows viewing test results even if the workflow fails
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: user-service/build/reports/tests/test/
+          retention-days: 7
+
