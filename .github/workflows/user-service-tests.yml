@@ -44,7 +44,7 @@ jobs:
       # Avoids re-downloading same dependencies, reduces build time significantly
       # Build time goes from 4-5 minutes to 1-2 minutes
       - name: Cache Gradle packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -109,9 +109,8 @@ jobs:
       # Allows viewing test results even if the workflow fails
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: user-service/build/reports/tests/test/
           retention-days: 7
-
