@@ -1,0 +1,86 @@
+# Ensure all tests pass before code reaches main branch
+# Catches bugs early, validates business logic, prevents broken code
+name: User Service Tests
+
+#  Run tests on every push to any branch + PRs targeting main
+# Catch issues early on feature branches, validate before merging to main
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'user-service/**'
+      - '.github/workflows/user-service-tests.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'user-service/**'
+
+
+jobs:
+  test:
+    name: Run All Tests
+    runs-on: ubuntu-latest
+
+    # ✅ This applies to ALL steps in this job
+    defaults:
+      run:
+        working-directory: ./user-service
+
+    steps:
+      # Get the latest code from repository
+      # GitHub Actions need access to source code to run tests
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Setup Java 21 environment
+      # Spring Boot application requires Java 21 to compile and run
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # Cache Gradle dependencies to speed up builds
+      # Avoids re-downloading same dependencies, reduces build time significantly
+      # Build time goes from 4-5 minutes to 1-2 minutes
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('user-service/**/*.gradle*', 'user-service/**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle
+
+      # Make gradlew executable
+      # Ensures the Gradle wrapper script has execute permissions
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      # Build and run all tests
+      # Runs all tests in the project without filtering
+      # This includes unit tests, integration tests, and application tests
+      - name: Build and Run All Tests
+        run: |
+          echo "🧪 Building and running all tests..."
+          ./gradlew clean test
+          echo "✅ All tests completed successfully"
+
+      # Generate test reports
+      # Provides detailed information about test results
+      - name: Generate Test Reports
+        if: always()
+        run: |
+          echo "📊 Test reports available at:"
+          echo "  - build/reports/tests/test/index.html"
+          ls -la build/reports/tests/test/ || echo "No test reports found"
+
+      # Upload test results as artifact
+      # Allows viewing test results even if the workflow fails
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: user-service/build/reports/tests/test/
+          retention-days: 7
