@@ -1,14 +1,20 @@
 # Ensure all tests pass before code reaches main branch
 # Catches bugs early, validates business logic, prevents broken code
-name: Automated Testing
+name: Product Service Tests
 
 #  Run tests on every push to any branch + PRs targeting main
 # Catch issues early on feature branches, validate before merging to main
 on:
   push:
     branches: ['**']
+    paths:
+      - 'product-service/**'
+      - '.github/workflows/product-service-tests.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'product-service/**'
+
 
 jobs:
   test:

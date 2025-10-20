@@ -1,0 +1,19 @@
+# IDE files
+.idea/
+*.iml
+*.iws
+
+# Build output
+out/
+target/
+
+# Logs
+logs/
+*.log
+
+# Data directories (MongoDB, etc.)
+**/data/
+
+# OS files
+.DS_Store
+Thumbs.db
