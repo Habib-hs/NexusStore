@@ -57,44 +57,14 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      # Build the Spring Boot JAR
-      # Ensures the application compiles successfully before running tests
-      - name: Build Spring Boot JAR
-        run: ./gradlew clean build -x test
-
-      # Run unit tests
-      # Validates individual components work correctly (UserService, UserController)
-      # Catches logic errors in business rules and API endpoints
-      - name: Run Unit Tests
+      # Build and run all tests
+      # Runs all tests in the project without filtering
+      # This includes unit tests, integration tests, and application tests
+      - name: Build and Run All Tests
         run: |
-          echo "🧪 Running unit tests..."
-          ./gradlew test --tests "*Test"
-          echo "✅ Unit tests completed"
-
-      # Run integration tests
-      # Tests that different parts of your app work together (Controller + Service + Database)
-      # Catches issues in data flow and API integration
-      - name: Run Integration Tests
-        run: |
-          echo "🔗 Running integration tests..."
-          ./gradlew test --tests "*IT" --tests "*IntegrationTest" --continue || echo "⚠️  No integration tests found or some failed"
-          echo "✅ Integration tests completed (or skipped if none found)"
-
-      # Run Spring Boot application tests
-      # Tests complete application context loading and basic functionality
-      - name: Run Application Tests
-        run: |
-          echo "🌱 Running Spring Boot application tests..."
-          ./gradlew test --tests "*Tests" --tests "*ApplicationTests" --continue || echo "⚠️  No application tests found or some failed"
-          echo "✅ Application tests completed"
-
-      # Run all tests with coverage
-      # Ensures complete test coverage and generates reports
-      - name: Run All Tests
-        run: |
-          echo "🌐 Running all tests..."
-          ./gradlew test
-          echo "✅ All tests completed"
+          echo "🧪 Building and running all tests..."
+          ./gradlew clean test
+          echo "✅ All tests completed successfully"
 
       # Generate test reports
       # Provides detailed information about test results
